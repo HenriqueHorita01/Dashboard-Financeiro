@@ -405,14 +405,14 @@ class App {
             });
         }
 
-        document.getElementById('modal-container').addEventListener('click', (e) => {
-            if (e.target.id === 'modal-container') {
-                // block closing onboarding
-                if (this.store.data.config.saldoInicial !== null) {
-                    this.closeModal();
-                }
-            }
-        });
+        if (homeLink) {
+    homeLink.addEventListener('click', () => {
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) {
+            sidebar.classList.remove('active');
+        }
+    });
+}
     }
 
     openModal(type, id = null) {

@@ -669,3 +669,41 @@ html, body {
         padding: 0.5rem;
     }
 }
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.topbar-actions-inline {
+    display: flex;
+    gap: 0.75rem;
+    margin-left: 0.75rem;
+}
+
+.topbar-actions-inline .btn {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .topbar-left {
+        width: 100%;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .topbar-actions-inline {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .topbar-actions-inline .btn {
+        flex: 0 0 auto;
+        font-size: 0.82rem;
+        padding: 0.45rem 0.7rem;
+    }
+}

@@ -1097,3 +1097,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+function exportarDados() {
+    try {
+        const chave = 'findash_data';
+        const dados = localStorage.getItem(chave);
+
+        if (!dados) {
+            alert('Não há dados para exportar.');
+            return;
+        }
+
+        const blob = new Blob([dados], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+
+        const hoje = new Date();
+        const dataFormatada = hoje.toISOString().split('T')[0];
+
+        a.download = `findash-backup-${dataFormatada}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        URL.revokeObjectURL(url);
+    } catch (erro) {
+        console.error('Erro ao exportar dados:', erro);
+        alert('Não foi possível exportar os dados.');
+    }
+}

@@ -383,22 +383,6 @@ class App {
         window.app = this;
 
         document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-        e.preventDefault();
-        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-        item.classList.add('active');
-        
-        const targetViewId = 'view-' + item.dataset.view;
-        document.querySelectorAll('.view-section').forEach(sec => sec.style.display = 'none');
-        const targetEl = document.getElementById(targetViewId);
-        if(targetEl) targetEl.style.display = 'block';
-
-        const pageTitle = document.getElementById('page-title');
-        if (pageTitle) {
-            pageTitle.textContent = item.textContent.trim();
-        }
-    });
-});
         document.getElementById('global-date').addEventListener('change', (e) => {
             if(e.target.value) {
                 this.referenceDate = new Date(e.target.value + 'T12:00:00'); 

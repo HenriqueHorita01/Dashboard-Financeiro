@@ -652,3 +652,20 @@ html, body {
         gap: 0.5rem;
     }
 }
+.data-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .data-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .data-actions button {
+        flex: 1;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
+}

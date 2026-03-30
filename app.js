@@ -1078,12 +1078,13 @@ class App {
         }
     }
 }
-document.addEventListener('DOMContentLoaded', () => { new App(); });
-// MENU MOBILE
 document.addEventListener('DOMContentLoaded', () => {
+    new App();
+
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
     const navItems = document.querySelectorAll('.nav-item');
+    const importarArquivo = document.getElementById('importar-arquivo');
 
     if (menuToggle && sidebar) {
         menuToggle.addEventListener('click', (event) => {
@@ -1106,20 +1107,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
 
-    if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
+    if (importarArquivo) {
+        importarArquivo.addEventListener('change', (event) => {
+            const arquivo = event.target.files[0];
+            if (!arquivo) return;
 
-        navItems.forEach(item => {
-            item.addEventListener('click', () => {
-                sidebar.classList.remove('active');
-            });
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    const dadosImportados = JSON.parse(e.target.result);
+
+                    localStorage.setItem('findash_data', JSON.stringify(dadosImportados));
+                    alert('Dados importados com sucesso! A página será recarregada.');
+                    window.location.reload();
+                } catch (erro) {
+                    console.error('Erro ao importar dados:', erro);
+                    alert('Arquivo inválido para importação.');
+                }
+            };
+
+            reader.readAsText(arquivo);
+            event.target.value = '';
         });
     }
 });
+
 function exportarDados() {
     try {
         const chave = 'findash_data';

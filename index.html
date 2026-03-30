@@ -45,9 +45,34 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            
+    <header class="topbar glass-panel">
+        <div class="topbar-left">
+            <button id="menu-toggle" class="menu-toggle">☰</button>
+            <h1 id="page-title">Visão Geral</h1>
+        </div>
 
-            <!-- VIEW: DASHBOARD -->
+        <div class="topbar-right" style="display:flex; gap:1.5rem; align-items:center;">
+            <div class="data-actions">
+                <button onclick="exportarDados()" class="btn btn-outline">⬇️ Exportar</button>
+                <input type="file" id="importar-arquivo" style="display:none" />
+                <button onclick="document.getElementById('importar-arquivo').click()" class="btn btn-outline">
+                    ⬆️ Importar
+                </button>
+            </div>
+
+            <div class="date-selector" style="display:flex; align-items:center; gap:0.5rem; background: rgba(0,0,0,0.2); padding: 0.5rem 1rem; border-radius:8px; border:1px solid var(--glass-border);">
+                <h1 style="font-size: 1.2rem; margin:0;">FinDash <span style="font-weight:400; font-size:1rem; opacity:0.8; margin-left:10px;">| V5 Ledger</span></h1>
+                <input type="date" id="global-date" style="background:transparent; border:none; color:var(--text-main); font-family:inherit; outline:none; font-weight:600; cursor:pointer;">
+            </div>
+
+            <div class="user-profile">
+                <span class="user-greeting">Olá, Usuário</span>
+                <div class="avatar">👨‍💻</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- VIEW: DASHBOARD -->
             <div class="content-area view-section active" id="view-dashboard">
                 <!-- Main Metrics -->
                 <div class="metrics-grid">

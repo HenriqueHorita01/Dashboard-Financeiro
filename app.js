@@ -382,18 +382,52 @@ class App {
     bindEvents() {
         window.app = this;
 
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-                item.classList.add('active');
-                
-                const targetViewId = 'view-' + item.dataset.view;
-                document.querySelectorAll('.view-section').forEach(sec => sec.style.display = 'none');
-                const targetEl = document.getElementById(targetViewId);
-                if(targetEl) targetEl.style.display = 'block';
-            });
-        });
+        const pageTitle = document.getElementById('page-title');
+const dashboardActions = document.querySelector('.dashboard-only-actions');
+const homeLink = document.getElementById('topbar-home');
+
+const updateView = (viewName) => {
+    document.querySelectorAll('.nav-item').forEach(nav => {
+        nav.classList.toggle('active', nav.dataset.view === viewName);
+    });
+
+    document.querySelectorAll('.view-section').forEach(sec => {
+        sec.style.display = 'none';
+    });
+
+    const targetEl = document.getElementById('view-' + viewName);
+    if (targetEl) targetEl.style.display = 'block';
+
+    const activeNav = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+    if (pageTitle && activeNav) {
+        pageTitle.textContent = activeNav.textContent.trim();
+    }
+
+    if (dashboardActions) {
+        dashboardActions.classList.toggle('hidden', viewName !== 'dashboard');
+    }
+};
+
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        updateView(item.dataset.view);
+    });
+});
+
+if (homeLink) {
+    homeLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        updateView('dashboard');
+
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) {
+            sidebar.classList.remove('active');
+        }
+    });
+}
+
+updateView('dashboard');
 
         document.getElementById('global-date').addEventListener('change', (e) => {
             if(e.target.value) {

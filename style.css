@@ -707,3 +707,68 @@ html, body {
         padding: 0.45rem 0.7rem;
     }
 }
+.topbar-brand {
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.topbar-brand:hover {
+    color: var(--primary);
+}
+
+.topbar-separator {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.topbar-user-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dashboard-only-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.dashboard-only-actions.hidden {
+    display: none !important;
+}
+
+.dashboard-only-actions .btn {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .topbar-user-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .dashboard-only-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .dashboard-only-actions .btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .topbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .topbar-separator {
+        font-size: 1rem;
+    }
+}

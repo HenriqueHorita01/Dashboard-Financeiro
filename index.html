@@ -85,18 +85,29 @@
             <div class="content-area view-section active" id="view-dashboard">
                 <!-- Main Metrics -->
                 <div class="metrics-grid">
-                    <div class="metric-card glass-panel primary-card">
-                        <h3 id="label-saldo-disponivel">Saldo Disponível em</h3>
-                        <h2 id="saldo-disponivel">R$ 0,00</h2>
-                        <div class="metric-footer"
-                    </div>
-                    <div class="metric-card glass-panel info-card" style="margin-top: 15px;">
-                        <h5>💡 Limite Diário (Até a Fatura)</h5>
-                        <h2 id="limite-diario">R$ 0,00</h2>
-                        <p class="text-muted" style="font-size:0.8rem; margin-top:5px;" id="limite-diario-hint">Considera o valor reservado para pagamento da próxima fatura do cartão, garantindo que você não comprometa o dinheiro necessário para quitá-la.</p>
-                    </div>
-                    <div class="metric-card glass-panel info-card">
-                        <h3>Saldo Projetado (Visão Futura)</h3>
+    <div class="metric-card glass-panel primary-card">
+        <h3 id="label-saldo-disponivel">Saldo Disponível em</h3>
+        <h2 id="saldo-disponivel">R$ 0,00</h2>
+
+        <div class="metric-footer" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span class="indicator">Lim. Diário Seguro: <strong id="limite-diario-seguro">R$ 0,00</strong></span>
+            <span class="indicator">Lim. c/ Entradas Previstas: <strong id="limite-diario-projetado">R$ 0,00</strong></span>
+
+            <div style="display:flex; align-items:center; gap:5px; background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:8px;">
+                <label style="font-size:0.7rem; color:rgba(255,255,255,0.7);">Saldo Base R$:</label>
+                <input type="number" id="inline-saldo-base" step="0.01" style="width:70px; background:transparent; border:none; color:white; font-family:inherit; font-size:0.8rem; font-weight:bold; outline:none; text-align:right;">
+            </div>
+        </div>
+    </div>
+
+    <div class="metric-card glass-panel info-card" style="margin-top: 15px;">
+        <h5>💡 Limite Diário (Até a Fatura)</h5>
+        <h2 id="limite-diario">R$ 0,00</h2>
+        <p class="text-muted" style="font-size:0.8rem; margin-top:5px;" id="limite-diario-hint">Considera o valor reservado para pagamento da próxima fatura do cartão, garantindo que você não comprometa o dinheiro necessário para quitá-la.</p>
+    </div>
+
+    <div class="metric-card glass-panel info-card">
+        <h3>Saldo Projetado (Visão Futura)</h3>
                         <h2 id="saldo-projetado">R$ 0,00</h2>
                         <div class="metric-footer" style="display:flex; align-items:center; gap:0.5rem;">
                             <span>Projetar até:</span>

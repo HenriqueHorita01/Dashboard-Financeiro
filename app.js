@@ -679,41 +679,101 @@ class App {
         document.getElementById('total-dinheiro-abs').textContent = formatCurrency(comprometidoData.dinheiroLivre);
         
         
-        // Limite diario
-        const vencimento = parseInt(this.store.data.cartao.vencimento, 10) || 5; 
-        let nextFaturaDate = new Date(this.referenceDate.getFullYear(), this.referenceDate.getMonth(), vencimento);
-        if (nextFaturaDate <= this.referenceDate) {
-            nextFaturaDate.setMonth(nextFaturaDate.getMonth() + 1);
-        }
-        
-        let nextFaturaValor = this.store.getFaturaBaseForMonth(new Date(nextFaturaDate.getFullYear(), nextFaturaDate.getMonth(), 1));
-        this.store.data.cartao.faturasFechadas.forEach(f => {
-            const vData = parseLocalDate(f.vencimentoData);
-            if (vData.getFullYear() === nextFaturaDate.getFullYear() && vData.getMonth() === nextFaturaDate.getMonth()) {
-                nextFaturaValor += f.valor;
-            }
-        });
-        
-        const diffDaysFatura = Math.ceil((nextFaturaDate - this.referenceDate) / (1000 * 60 * 60 * 24));
-        const daysToNextInvoice = diffDaysFatura > 0 ? diffDaysFatura : 1;
-        
-        const limEl = document.getElementById('limite-diario');
-        const limitHint = document.getElementById('limite-diario-hint');
+        // Limite diário
+const vencimento = parseInt(this.store.data.cartao.vencimento, 10) || 5;
+let nextFaturaDate = new Date(this.referenceDate.getFullYear(), this.referenceDate.getMonth(), vencimento);
 
-        if (sDisponivel <= 0) {
-            limEl.textContent = "R$ 0,00";
-            limEl.style.color = "var(--danger)";
-            if (limitHint) limitHint.innerHTML = `<span style="color:var(--danger); font-weight:bold;">⚠️ Saldo atual está negativo ou zerado.</span> Margem indisponível para gastos diários.`;
-        } else if (sDisponivel >= nextFaturaValor) {
-            const limiteDiario = (sDisponivel - nextFaturaValor) / daysToNextInvoice;
-            limEl.textContent = formatCurrency(limiteDiario);
-            limEl.style.color = "inherit";
-            if (limitHint) limitHint.innerHTML = `A reserva para a próxima fatura (${formatDate(nextFaturaDate.toISOString().split('T')[0])}) de <strong>${formatCurrency(nextFaturaValor)}</strong> está protegida neste cálculo para os próximos ${daysToNextInvoice} dia(s).`;
-        } else {
-            limEl.textContent = "⚠️ R$ 0,00";
-            limEl.style.color = "var(--warning)";
-            if (limitHint) limitHint.innerHTML = `<span style="color:var(--warning); font-weight:bold;">⚠️ Saldo atual de ${formatCurrency(sDisponivel)} é insuficiente para cobrir a próxima fatura de ${formatCurrency(nextFaturaValor)}.</span> O limite foi zerado como alerta!`;
-        }
+if (nextFaturaDate <= this.referenceDate) {
+    nextFaturaDate.setMonth(nextFaturaDate.getMonth() + 1);
+}
+
+let nextFaturaValor = this.store.getFaturaBaseForMonth(
+    new Date(nextFaturaDate.getFullYear(), nextFaturaDate.getMonth(), 1)
+);
+
+this.store.data.cartao.faturasFechadas.forEach(f => {
+    const vData = parseLocalDate(f.vencimentoData);
+    if (
+        vData.getFullYear() === nextFaturaDate.getFullYear() &&
+        vData.getMonth() === nextFaturaDate.getMonth()
+    ) {
+        nextFaturaValor += f.valor;
+    }
+});
+
+const diffDaysFatura = Math.ceil((nextFaturaDate - this.referenceDate) / (1000 * 60 * 60 * 24));
+const daysToNextInvoice = diffDaysFatura > 0 ? diffDaysFatura : 1;
+
+const limEl = document.getElementById('limite-diario');
+const limSeguroEl = document.getElementById('limite-diario-seguro');
+const limProjetadoEl = document.getElementById('limite-diario-projetado');
+const limitHint = document.getElementById('limite-diario-hint');
+
+// calcula entradas fixas previstas até a próxima fatura
+let entradasFixasAteFatura = 0;
+const refDateStr = this.referenceDate.toISOString().split('T')[0];
+const nextFaturaDateStr = nextFaturaDate.toISOString().split('T')[0];
+
+this.store.data.receitasFixas.forEach(r => {
+    const ateProximaFatura = countOccurrences(r.dia, r.dataInicio, nextFaturaDateStr, r.dataFim);
+    const ateHoje = countOccurrences(r.dia, r.dataInicio, refDateStr, r.dataFim);
+    const futuras = ateProximaFatura - ateHoje;
+
+    if (futuras > 0) {
+        entradasFixasAteFatura += futuras * r.valor;
+    }
+});
+
+const saldoProjetadoAteFatura = sDisponivel + entradasFixasAteFatura;
+const margemSegura = sDisponivel - nextFaturaValor;
+const margemProjetada = saldoProjetadoAteFatura - nextFaturaValor;
+
+if (limSeguroEl) {
+    if (margemSegura <= 0) {
+        limSeguroEl.textContent = "R$ 0,00";
+    } else {
+        limSeguroEl.textContent = formatCurrency(margemSegura / daysToNextInvoice);
+    }
+}
+
+if (limProjetadoEl) {
+    if (margemProjetada <= 0) {
+        limProjetadoEl.textContent = "R$ 0,00";
+    } else {
+        limProjetadoEl.textContent = formatCurrency(margemProjetada / daysToNextInvoice);
+    }
+}
+
+if (sDisponivel <= 0) {
+    if (limEl) {
+        limEl.textContent = "R$ 0,00";
+        limEl.style.color = "var(--danger)";
+    }
+
+    if (limitHint) {
+        limitHint.innerHTML = `<span style="color:var(--danger); font-weight:bold;">⚠️ Saldo atual está negativo ou zerado.</span> Margem indisponível para gastos diários.`;
+    }
+} else if (sDisponivel >= nextFaturaValor) {
+    const limiteDiarioSeguro = margemSegura / daysToNextInvoice;
+
+    if (limEl) {
+        limEl.textContent = formatCurrency(limiteDiarioSeguro);
+        limEl.style.color = "inherit";
+    }
+
+    if (limitHint) {
+        limitHint.innerHTML = `A reserva para a próxima fatura (${formatDate(nextFaturaDate.toISOString().split('T')[0])}) de <strong>${formatCurrency(nextFaturaValor)}</strong> está protegida neste cálculo para os próximos ${daysToNextInvoice} dia(s).`;
+    }
+} else {
+    if (limEl) {
+        limEl.textContent = "⚠️ R$ 0,00";
+        limEl.style.color = "var(--warning)";
+    }
+
+    if (limitHint) {
+        limitHint.innerHTML = `<span style="color:var(--warning); font-weight:bold;">⚠️ Saldo atual de ${formatCurrency(sDisponivel)} é insuficiente para cobrir a próxima fatura de ${formatCurrency(nextFaturaValor)}.</span> O limite foi zerado como alerta!`;
+    }
+}
         
         // Cores Dinâmicas
         const sDispEl = document.getElementById('saldo-disponivel').parentElement;

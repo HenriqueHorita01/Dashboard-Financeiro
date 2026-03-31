@@ -710,23 +710,6 @@ const limProjetadoEl = document.getElementById('limite-diario-projetado');
 const limitHint = document.getElementById('limite-diario-hint');
 
 // calcula entradas fixas previstas até a próxima fatura
-let entradasFixasAteFatura = 0;
-const refDateStr = this.referenceDate.toISOString().split('T')[0];
-const nextFaturaDateStr = nextFaturaDate.toISOString().split('T')[0];
-
-this.store.data.receitasFixas.forEach(r => {
-    const ateProximaFatura = countOccurrences(r.dia, r.dataInicio, nextFaturaDateStr, r.dataFim);
-    const ateHoje = countOccurrences(r.dia, r.dataInicio, refDateStr, r.dataFim);
-    const futuras = ateProximaFatura - ateHoje;
-
-    if (futuras > 0) {
-        entradasFixasAteFatura += futuras * r.valor;
-    }
-});
-
-const saldoProjetadoAteFatura = sDisponivel + entradasFixasAteFatura;
-const margemSegura = sDisponivel - nextFaturaValor;
-const margemProjetada = saldoProjetadoAteFatura - nextFaturaValor;
 
 if (limSeguroEl) {
     if (margemSegura <= 0) {

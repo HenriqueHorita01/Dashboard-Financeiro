@@ -380,40 +380,101 @@ class App {
     }
 
     bindEvents() {
-        window.app = this;
+    window.app = this;
 
-        document.querySelectorAll('.nav-item').forEach(item => {
-        document.getElementById('global-date').addEventListener('change', (e) => {
-            if(e.target.value) {
-                this.referenceDate = new Date(e.target.value + 'T12:00:00'); 
-                this.render();
-            }
+    const pageTitle = document.getElementById('page-title');
+    const dashboardActions = document.getElementById('dashboard-actions');
+    const homeLink = document.getElementById('topbar-home');
+
+    const viewTitles = {
+        dashboard: 'Visão Geral',
+        receitas: 'Receitas',
+        'receitas-fixas': 'Rec. Fixas',
+        'despesas-fixas': 'Desp. Fixas',
+        'despesas-variaveis': 'Desp. Variáveis',
+        cartao: 'Cartão de Crédito',
+        investimentos: 'Investimentos',
+        'planejamento-diario': 'Plan. Diário',
+        planejamento: 'Plan. Mensal'
+    };
+
+    const updateView = (viewName) => {
+        document.querySelectorAll('.nav-item').forEach(nav => {
+            nav.classList.toggle('active', nav.dataset.view === viewName);
         });
 
-        document.getElementById('projecao-date').addEventListener('change', (e) => {
-            if(e.target.value) {
-                this.projectedDate = new Date(e.target.value + 'T12:00:00');
-                this.render();
-            }
+        document.querySelectorAll('.view-section').forEach(sec => {
+            sec.style.display = 'none';
         });
 
-        const inlineSaldo = document.getElementById('inline-saldo-base');
-        if (inlineSaldo) {
-            inlineSaldo.addEventListener('input', (e) => {
-                this.store.setConfig(parseNumber(e.target.value), this.store.data.config.dataInicial || new Date().toISOString().split('T')[0]);
-                this.render();
-            });
+        const targetEl = document.getElementById('view-' + viewName);
+        if (targetEl) {
+            targetEl.style.display = 'block';
         }
 
-        if (homeLink) {
-    homeLink.addEventListener('click', () => {
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar) {
-            sidebar.classList.remove('active');
+        if (pageTitle) {
+            pageTitle.textContent = viewTitles[viewName] || 'Visão Geral';
+        }
+
+        if (dashboardActions) {
+            dashboardActions.style.display = viewName === 'dashboard' ? 'flex' : 'none';
+        }
+    };
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            updateView(item.dataset.view);
+        });
+    });
+
+    if (homeLink) {
+        homeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            updateView('dashboard');
+
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.remove('active');
+            }
+        });
+    }
+
+    updateView('dashboard');
+
+    document.getElementById('global-date').addEventListener('change', (e) => {
+        if (e.target.value) {
+            this.referenceDate = new Date(e.target.value + 'T12:00:00');
+            this.render();
+        }
+    });
+
+    document.getElementById('projecao-date').addEventListener('change', (e) => {
+        if (e.target.value) {
+            this.projectedDate = new Date(e.target.value + 'T12:00:00');
+            this.render();
+        }
+    });
+
+    const inlineSaldo = document.getElementById('inline-saldo-base');
+    if (inlineSaldo) {
+        inlineSaldo.addEventListener('input', (e) => {
+            this.store.setConfig(
+                parseNumber(e.target.value),
+                this.store.data.config.dataInicial || new Date().toISOString().split('T')[0]
+            );
+            this.render();
+        });
+    }
+
+    document.getElementById('modal-container').addEventListener('click', (e) => {
+        if (e.target.id === 'modal-container') {
+            if (this.store.data.config.saldoInicial !== null) {
+                this.closeModal();
+            }
         }
     });
 }
-    }
 
     openModal(type, id = null) {
         const modalBody = document.getElementById('modal-body');

@@ -709,37 +709,34 @@ class App {
         const limProjetadoEl = document.getElementById('limite-diario-projetado');
         const limitHint = document.getElementById('limite-diario-hint');
 
-        let entradasFixasAteFatura = 0;
+                let entradasFixasAteFatura = 0;
+
+        const refDateStr = this.referenceDate.toISOString().split('T')[0];
+        const nextFaturaDateStr = nextFaturaDate.toISOString().split('T')[0];
 
         this.store.data.receitasFixas.forEach(r => {
             if (!r.dataInicio || !r.dia) return;
 
-            const dataInicio = parseLocalDate(r.dataInicio);
-            const dataFim = r.dataFim ? parseLocalDate(r.dataFim) : null;
+            const diaRecebimento = parseInt(r.dia, 10);
+            const valorRecebimento = Number(r.valor) || 0;
 
-            let cursor = new Date(dataInicio.getFullYear(), dataInicio.getMonth(), 1);
+            const totalAteFatura = countOccurrences(
+                diaRecebimento,
+                r.dataInicio,
+                nextFaturaDateStr,
+                r.dataFim
+            );
 
-            while (cursor <= nextFaturaDate) {
-                let diaRecebimento = parseInt(r.dia, 10);
-                const ultimoDiaMes = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+            const totalAteHoje = countOccurrences(
+                diaRecebimento,
+                r.dataInicio,
+                refDateStr,
+                r.dataFim
+            );
 
-                if (diaRecebimento > ultimoDiaMes) {
-                    diaRecebimento = ultimoDiaMes;
-                }
+            const ocorrenciasFuturas = Math.max(0, totalAteFatura - totalAteHoje);
 
-                const dataRecebimento = new Date(cursor.getFullYear(), cursor.getMonth(), diaRecebimento);
-
-                const depoisDeHoje = dataRecebimento > this.referenceDate;
-                const antesOuNaFatura = dataRecebimento <= nextFaturaDate;
-                const depoisDoInicio = dataRecebimento >= dataInicio;
-                const antesDoFim = !dataFim || dataRecebimento <= dataFim;
-
-                if (depoisDeHoje && antesOuNaFatura && depoisDoInicio && antesDoFim) {
-                    entradasFixasAteFatura += Number(r.valor) || 0;
-                }
-
-                cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
-            }
+            entradasFixasAteFatura += ocorrenciasFuturas * valorRecebimento;
         });
 
         const margemSegura = sDisponivel - nextFaturaValor;

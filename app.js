@@ -679,8 +679,120 @@ class App {
         document.getElementById('total-dinheiro-abs').textContent = formatCurrency(comprometidoData.dinheiroLivre);
         
         
-        // Limite diário
-        
+               // Limite diário
+        const vencimento = parseInt(this.store.data.cartao.vencimento, 10) || 5;
+        let nextFaturaDate = new Date(this.referenceDate.getFullYear(), this.referenceDate.getMonth(), vencimento);
+
+        if (nextFaturaDate <= this.referenceDate) {
+            nextFaturaDate.setMonth(nextFaturaDate.getMonth() + 1);
+        }
+
+        let nextFaturaValor = this.store.getFaturaBaseForMonth(
+            new Date(nextFaturaDate.getFullYear(), nextFaturaDate.getMonth(), 1)
+        );
+
+        this.store.data.cartao.faturasFechadas.forEach(f => {
+            const vData = parseLocalDate(f.vencimentoData);
+            if (
+                vData.getFullYear() === nextFaturaDate.getFullYear() &&
+                vData.getMonth() === nextFaturaDate.getMonth()
+            ) {
+                nextFaturaValor += f.valor;
+            }
+        });
+
+        const diffDaysFatura = Math.ceil((nextFaturaDate - this.referenceDate) / (1000 * 60 * 60 * 24));
+        const daysToNextInvoice = diffDaysFatura > 0 ? diffDaysFatura : 1;
+
+        const limEl = document.getElementById('limite-diario');
+        const limSeguroEl = document.getElementById('limite-diario-seguro');
+        const limProjetadoEl = document.getElementById('limite-diario-projetado');
+        const limitHint = document.getElementById('limite-diario-hint');
+
+        let entradasFixasAteFatura = 0;
+
+        this.store.data.receitasFixas.forEach(r => {
+            if (!r.dataInicio || !r.dia) return;
+
+            const dataInicio = parseLocalDate(r.dataInicio);
+            const dataFim = r.dataFim ? parseLocalDate(r.dataFim) : null;
+
+            let cursor = new Date(dataInicio.getFullYear(), dataInicio.getMonth(), 1);
+
+            while (cursor <= nextFaturaDate) {
+                let diaRecebimento = parseInt(r.dia, 10);
+                const ultimoDiaMes = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+
+                if (diaRecebimento > ultimoDiaMes) {
+                    diaRecebimento = ultimoDiaMes;
+                }
+
+                const dataRecebimento = new Date(cursor.getFullYear(), cursor.getMonth(), diaRecebimento);
+
+                const depoisDeHoje = dataRecebimento > this.referenceDate;
+                const antesOuNaFatura = dataRecebimento <= nextFaturaDate;
+                const depoisDoInicio = dataRecebimento >= dataInicio;
+                const antesDoFim = !dataFim || dataRecebimento <= dataFim;
+
+                if (depoisDeHoje && antesOuNaFatura && depoisDoInicio && antesDoFim) {
+                    entradasFixasAteFatura += Number(r.valor) || 0;
+                }
+
+                cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+            }
+        });
+
+        const margemSegura = sDisponivel - nextFaturaValor;
+        const margemProjetada = (sDisponivel + entradasFixasAteFatura) - nextFaturaValor;
+
+        if (limSeguroEl) {
+            limSeguroEl.textContent = margemSegura > 0
+                ? formatCurrency(margemSegura / daysToNextInvoice)
+                : "R$ 0,00";
+        }
+
+        if (limProjetadoEl) {
+            limProjetadoEl.textContent = margemProjetada > 0
+                ? formatCurrency(margemProjetada / daysToNextInvoice)
+                : "R$ 0,00";
+        }
+
+        if (sDisponivel <= 0) {
+            if (limEl) {
+                limEl.textContent = "R$ 0,00";
+                limEl.style.color = "var(--danger)";
+            }
+
+            if (limitHint) {
+                limitHint.innerHTML = `<span style="color:var(--danger); font-weight:bold;">⚠️ Saldo atual está negativo ou zerado.</span> Margem indisponível para gastos diários.`;
+            }
+        } else if (margemSegura > 0) {
+            const limiteDiarioSeguro = margemSegura / daysToNextInvoice;
+
+            if (limEl) {
+                limEl.textContent = formatCurrency(limiteDiarioSeguro);
+                limEl.style.color = "inherit";
+            }
+
+            if (limitHint) {
+                let textoExtra = '';
+                if (entradasFixasAteFatura > 0) {
+                    textoExtra = ` Entradas fixas previstas até a próxima fatura: <strong>${formatCurrency(entradasFixasAteFatura)}</strong>.`;
+                }
+
+                limitHint.innerHTML = `A reserva para a próxima fatura (${formatDate(nextFaturaDate.toISOString().split('T')[0])}) de <strong>${formatCurrency(nextFaturaValor)}</strong> está protegida neste cálculo para os próximos ${daysToNextInvoice} dia(s).${textoExtra}`;
+            }
+        } else {
+            if (limEl) {
+                limEl.textContent = "⚠️ R$ 0,00";
+                limEl.style.color = "var(--warning)";
+            }
+
+            if (limitHint) {
+                limitHint.innerHTML = `<span style="color:var(--warning); font-weight:bold;">⚠️ Saldo atual de ${formatCurrency(sDisponivel)} é insuficiente para cobrir a próxima fatura de ${formatCurrency(nextFaturaValor)}.</span> O limite foi zerado como alerta!`;
+            }
+        }
+
         // Cores Dinâmicas
         const sDispEl = document.getElementById('saldo-disponivel').parentElement;
         if (sDisponivel < 0) sDispEl.className = 'metric-card glass-panel danger-card';

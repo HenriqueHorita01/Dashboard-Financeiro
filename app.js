@@ -705,27 +705,6 @@ const diffDaysFatura = Math.ceil((nextFaturaDate - this.referenceDate) / (1000 *
 const daysToNextInvoice = diffDaysFatura > 0 ? diffDaysFatura : 1;
 
 const limEl = document.getElementById('limite-diario');
-const limSeguroEl = document.getElementById('limite-diario-seguro');
-const limProjetadoEl = document.getElementById('limite-diario-projetado');
-const limitHint = document.getElementById('limite-diario-hint');
-
-// calcula entradas fixas previstas até a próxima fatura
-
-if (limSeguroEl) {
-    if (margemSegura <= 0) {
-        limSeguroEl.textContent = "R$ 0,00";
-    } else {
-        limSeguroEl.textContent = formatCurrency(margemSegura / daysToNextInvoice);
-    }
-}
-
-if (limProjetadoEl) {
-    if (margemProjetada <= 0) {
-        limProjetadoEl.textContent = "R$ 0,00";
-    } else {
-        limProjetadoEl.textContent = formatCurrency(margemProjetada / daysToNextInvoice);
-    }
-}
 
 if (sDisponivel <= 0) {
     if (limEl) {

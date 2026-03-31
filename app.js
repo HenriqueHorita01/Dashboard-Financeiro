@@ -801,6 +801,84 @@ class App {
         else compEl.className = 'metric-card glass-panel primary-card';
         
         // Cartão (Dashboard View)
+
+                const currentMonth = this.referenceDate.getMonth();
+        const currentYear = this.referenceDate.getFullYear();
+        const currentMonthDate = new Date(currentYear, currentMonth, 1);
+        const fechamento = this.store.data.cartao.diaFechamento;
+
+        const refDateOnly = new Date(
+            this.referenceDate.getFullYear(),
+            this.referenceDate.getMonth(),
+            this.referenceDate.getDate()
+        );
+
+        // base normal da fatura do mês
+        let faturaAtualValor = this.store.getFaturaBaseForMonth(currentMonthDate);
+
+        // faturas históricas do mês que ainda não venceram na data observada
+        const faturasHistoricasAtivasEsteMes = this.store.data.cartao.faturasFechadas.filter(f => {
+            const dp = parseLocalDate(f.vencimentoData);
+            const mesmaCompetencia = dp.getMonth() === currentMonth && dp.getFullYear() === currentYear;
+            const aindaNaoVenceu = dp >= refDateOnly;
+            return mesmaCompetencia && aindaNaoVenceu;
+        });
+
+        faturasHistoricasAtivasEsteMes.forEach(f => {
+            faturaAtualValor += f.valor;
+        });
+
+        const faturaEl = document.getElementById('fatura-atual');
+        if (faturaEl) {
+            faturaEl.textContent = formatCurrency(faturaAtualValor);
+        }
+
+        const faturasHistoricasEsteMes = faturasHistoricasAtivasEsteMes.map(f => `
+            <li class="list-item">
+                <div class="item-info">
+                    <h4>Fatura Histórica / Débito Prévio</h4>
+                    <p>${formatDate(f.vencimentoData)}</p>
+                </div>
+                <div class="item-amount text-danger">${formatCurrency(f.valor)}</div>
+            </li>
+        `);
+
+        const comprasEsteMes = [];
+        this.store.data.cartao.compras.forEach(c => {
+            const baseInvoiceStart = getFaturaMonth(c.data, fechamento);
+            const diffMonths = (currentYear - baseInvoiceStart.getFullYear()) * 12 +
+                               (currentMonth - baseInvoiceStart.getMonth());
+
+            if (c.parcelado) {
+                if (diffMonths >= 0 && diffMonths < c.parcelas) {
+                    comprasEsteMes.push(`
+                        <li class="list-item">
+                            <div class="item-info">
+                                <h4>${c.descricao} (${diffMonths + 1}/${c.parcelas})</h4>
+                                <p>Adquirido em: ${formatDate(c.data)}</p>
+                            </div>
+                            <div class="item-amount text-danger">${formatCurrency(c.valor / c.parcelas)}</div>
+                        </li>
+                    `);
+                }
+            } else {
+                if (diffMonths === 0) {
+                    comprasEsteMes.push(`
+                        <li class="list-item">
+                            <div class="item-info">
+                                <h4>${c.descricao}</h4>
+                                <p>Adquirido em: ${formatDate(c.data)}</p>
+                            </div>
+                            <div class="item-amount text-danger">${formatCurrency(c.valor)}</div>
+                        </li>
+                    `);
+                }
+            }
+        });
+
+        document.getElementById('lista-fatura-atual').innerHTML =
+            [...faturasHistoricasEsteMes, ...comprasEsteMes].slice(0, 7).join('') ||
+            '<p class="text-muted" style="font-size:0.85rem">Nenhuma compra faturada no mês selecionado.</p>';
         
         document.getElementById('lista-receitas').innerHTML = this.store.data.receitas.filter(r => {
              const dp = new Date(r.data + 'T00:00:00'); 

@@ -51,6 +51,30 @@ const getFaturaMonth = (purchaseDateStr, diaFechamento) => {
 };
 
 const getInvoiceReferenceMonth = (refDateInput, diaVencimento) => {
+    const getFaturaDueDate = (purchaseDateStr, diaVencimento) => {
+    const pDate = parseLocalDate(purchaseDateStr);
+    const dueDay = parseInt(diaVencimento, 10);
+
+    if (isNaN(dueDay)) {
+        return new Date(pDate.getFullYear(), pDate.getMonth(), 1);
+    }
+
+    let dueMonth = pDate.getMonth();
+    let dueYear = pDate.getFullYear();
+
+    if (pDate.getDate() >= dueDay) {
+        dueMonth += 1;
+        if (dueMonth > 11) {
+            dueMonth = 0;
+            dueYear += 1;
+        }
+    }
+
+    const lastDay = new Date(dueYear, dueMonth + 1, 0).getDate();
+    const finalDueDay = Math.min(dueDay, lastDay);
+
+    return new Date(dueYear, dueMonth, finalDueDay);
+};
     const refDate = parseLocalDate(refDateInput);
     const dueDay = parseInt(diaVencimento, 10);
 
@@ -199,16 +223,28 @@ class Store {
         const fechamento = this.data.cartao.vencimento;
         
         this.data.cartao.compras.forEach(c => {
-            const baseInvoiceStart = getFaturaMonth(c.data, fechamento);
-            const diffMonths = (monthStart.getFullYear() - baseInvoiceStart.getFullYear()) * 12 + 
-                               (monthStart.getMonth() - baseInvoiceStart.getMonth());
+    const firstDueDate = getFaturaDueDate(c.data, fechamento);
 
-            if (c.parcelado) {
-                if (diffMonths >= 0 && diffMonths < c.parcelas) total += (c.valor / c.parcelas);
-            } else {
-                if (diffMonths === 0) total += c.valor;
+    if (c.parcelado) {
+        for (let i = 0; i < c.parcelas; i++) {
+            const parcelaDueDate = new Date(firstDueDate.getFullYear(), firstDueDate.getMonth() + i, firstDueDate.getDate());
+
+            if (
+                parcelaDueDate.getFullYear() === monthStart.getFullYear() &&
+                parcelaDueDate.getMonth() === monthStart.getMonth()
+            ) {
+                total += (c.valor / c.parcelas);
             }
-        });
+        }
+    } else {
+        if (
+            firstDueDate.getFullYear() === monthStart.getFullYear() &&
+            firstDueDate.getMonth() === monthStart.getMonth()
+        ) {
+            total += c.valor;
+        }
+    }
+});
 
         // Add fixed expenses on credit whose virtual mapped month is this one
         this.data.despesasFixas.forEach(d => {
@@ -862,37 +898,45 @@ let faturaAtualValor = this.store.getFaturaBaseForMonth(invoiceMonthDate);
         `);
 
         const comprasEsteMes = [];
-        this.store.data.cartao.compras.forEach(c => {
-            const baseInvoiceStart = getFaturaMonth(c.data, fechamento);
-            const diffMonths = (currentYear - baseInvoiceStart.getFullYear()) * 12 +
-                               (currentMonth - baseInvoiceStart.getMonth());
+this.store.data.cartao.compras.forEach(c => {
+    const firstDueDate = getFaturaDueDate(c.data, fechamento);
 
-            if (c.parcelado) {
-                if (diffMonths >= 0 && diffMonths < c.parcelas) {
-                    comprasEsteMes.push(`
-                        <li class="list-item">
-                            <div class="item-info">
-                                <h4>${c.descricao} (${diffMonths + 1}/${c.parcelas})</h4>
-                                <p>Adquirido em: ${formatDate(c.data)}</p>
-                            </div>
-                            <div class="item-amount text-danger">${formatCurrency(c.valor / c.parcelas)}</div>
-                        </li>
-                    `);
-                }
-            } else {
-                if (diffMonths === 0) {
-                    comprasEsteMes.push(`
-                        <li class="list-item">
-                            <div class="item-info">
-                                <h4>${c.descricao}</h4>
-                                <p>Adquirido em: ${formatDate(c.data)}</p>
-                            </div>
-                            <div class="item-amount text-danger">${formatCurrency(c.valor)}</div>
-                        </li>
-                    `);
-                }
+    if (c.parcelado) {
+        for (let i = 0; i < c.parcelas; i++) {
+            const parcelaDueDate = new Date(firstDueDate.getFullYear(), firstDueDate.getMonth() + i, firstDueDate.getDate());
+
+            if (
+                parcelaDueDate.getFullYear() === currentYear &&
+                parcelaDueDate.getMonth() === currentMonth
+            ) {
+                comprasEsteMes.push(`
+                    <li class="list-item">
+                        <div class="item-info">
+                            <h4>${c.descricao} (${i + 1}/${c.parcelas})</h4>
+                            <p>Adquirido em: ${formatDate(c.data)}</p>
+                        </div>
+                        <div class="item-amount text-danger">${formatCurrency(c.valor / c.parcelas)}</div>
+                    </li>
+                `);
             }
-        });
+        }
+    } else {
+        if (
+            firstDueDate.getFullYear() === currentYear &&
+            firstDueDate.getMonth() === currentMonth
+        ) {
+            comprasEsteMes.push(`
+                <li class="list-item">
+                    <div class="item-info">
+                        <h4>${c.descricao}</h4>
+                        <p>Adquirido em: ${formatDate(c.data)}</p>
+                    </div>
+                    <div class="item-amount text-danger">${formatCurrency(c.valor)}</div>
+                </li>
+            `);
+        }
+    }
+});
 
         document.getElementById('lista-fatura-atual').innerHTML =
             [...faturasHistoricasEsteMes, ...comprasEsteMes].slice(0, 7).join('') ||

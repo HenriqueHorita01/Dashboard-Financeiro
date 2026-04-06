@@ -49,6 +49,7 @@ const getFaturaMonth = (purchaseDateStr, diaFechamento) => {
 
     return monthStart;
 };
+
 const getInvoiceReferenceMonth = (refDateInput, diaVencimento) => {
     const refDate = parseLocalDate(refDateInput);
     const dueDay = parseInt(diaVencimento, 10);
@@ -61,10 +62,6 @@ const getInvoiceReferenceMonth = (refDateInput, diaVencimento) => {
 
     return monthStart;
 };
-
-    return monthStart;
-};
-const countOccurrences = (dia, startDateStr, refDateStr, endDateStr = null) => {
     const start = parseLocalDate(startDateStr);
     
     // refDateStr comes from toISOString().split('T')[0] normally, we parse it as local:

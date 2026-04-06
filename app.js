@@ -62,9 +62,10 @@ const getInvoiceReferenceMonth = (refDateInput, diaVencimento) => {
 
     return monthStart;
 };
+
+const countOccurrences = (dia, startDateStr, refDateStr, endDateStr = null) => {
     const start = parseLocalDate(startDateStr);
     
-    // refDateStr comes from toISOString().split('T')[0] normally, we parse it as local:
     const ref = parseLocalDate(refDateStr);
     ref.setHours(23, 59, 59, 999);
     
@@ -80,12 +81,10 @@ const getInvoiceReferenceMonth = (refDateInput, diaVencimento) => {
     let count = 0;
     let current = new Date(start);
     
-    // Iterate month by month
-    while(true) {
-        // Find the "dia" in current month
+    while (true) {
         let targetDay = dia;
         const lastDayOfMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
-        if (dia > lastDayOfMonth) targetDay = lastDayOfMonth; // Cap at end of month
+        if (dia > lastDayOfMonth) targetDay = lastDayOfMonth;
 
         const hitDate = new Date(current.getFullYear(), current.getMonth(), targetDay);
         
@@ -93,8 +92,10 @@ const getInvoiceReferenceMonth = (refDateInput, diaVencimento) => {
             count++;
         }
         
-        if (current.getFullYear() > end.getFullYear() || 
-           (current.getFullYear() === end.getFullYear() && current.getMonth() >= end.getMonth())) {
+        if (
+            current.getFullYear() > end.getFullYear() ||
+            (current.getFullYear() === end.getFullYear() && current.getMonth() >= end.getMonth())
+        ) {
             break;
         }
         

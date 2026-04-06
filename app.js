@@ -40,9 +40,13 @@ const getDaysLeftInMonth = (refDate) => {
 const getFaturaMonth = (purchaseDateStr, diaFechamento) => {
     const pDate = parseLocalDate(purchaseDateStr);
     let monthStart = new Date(pDate.getFullYear(), pDate.getMonth(), 1);
-    if (diaFechamento && pDate.getDate() >= parseInt(diaFechamento, 10)) {
+
+    const diaCorte = parseInt(diaFechamento, 10);
+
+    if (!isNaN(diaCorte) && pDate.getDate() >= diaCorte) {
         monthStart.setMonth(monthStart.getMonth() + 1);
     }
+
     return monthStart;
 };
 
@@ -180,7 +184,7 @@ class Store {
     // Returns a specific fatura base value regardless of whether it was paid.
     getFaturaBaseForMonth(monthStart) {
         let total = 0;
-        const fechamento = this.data.cartao.diaFechamento;
+        const fechamento = this.data.cartao.diaFechamento || this.data.cartao.vencimento;
         
         this.data.cartao.compras.forEach(c => {
             const baseInvoiceStart = getFaturaMonth(c.data, fechamento);
@@ -805,7 +809,7 @@ class App {
                 const currentMonth = this.referenceDate.getMonth();
         const currentYear = this.referenceDate.getFullYear();
         const currentMonthDate = new Date(currentYear, currentMonth, 1);
-        const fechamento = this.store.data.cartao.diaFechamento;
+        const fechamento = this.store.data.cartao.diaFechamento || this.store.data.cartao.vencimento;
 
         const refDateOnly = new Date(
             this.referenceDate.getFullYear(),

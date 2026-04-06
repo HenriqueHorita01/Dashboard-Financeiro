@@ -49,7 +49,18 @@ const getFaturaMonth = (purchaseDateStr, diaFechamento) => {
 
     return monthStart;
 };
+const getInvoiceReferenceMonth = (refDateInput, diaVencimento) => {
+    const refDate = parseLocalDate(refDateInput);
+    const dueDay = parseInt(diaVencimento, 10);
 
+    let monthStart = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
+
+    if (!isNaN(dueDay) && refDate.getDate() > dueDay) {
+        monthStart.setMonth(monthStart.getMonth() + 1);
+    }
+
+    return monthStart;
+};
 const countOccurrences = (dia, startDateStr, refDateStr, endDateStr = null) => {
     const start = parseLocalDate(startDateStr);
     
@@ -806,19 +817,21 @@ class App {
         
         // Cartão (Dashboard View)
 
-                const currentMonth = this.referenceDate.getMonth();
-        const currentYear = this.referenceDate.getFullYear();
-        const currentMonthDate = new Date(currentYear, currentMonth, 1);
-        const fechamento = this.store.data.cartao.diaFechamento || this.store.data.cartao.vencimento;
+                const vencimentoCartao = parseInt(this.store.data.cartao.vencimento, 10) || 1;
+const fechamento = this.store.data.cartao.diaFechamento || this.store.data.cartao.vencimento;
 
-        const refDateOnly = new Date(
-            this.referenceDate.getFullYear(),
-            this.referenceDate.getMonth(),
-            this.referenceDate.getDate()
-        );
+const refDateOnly = new Date(
+    this.referenceDate.getFullYear(),
+    this.referenceDate.getMonth(),
+    this.referenceDate.getDate()
+);
 
-        // base normal da fatura do mês
-        let faturaAtualValor = this.store.getFaturaBaseForMonth(currentMonthDate);
+const invoiceMonthDate = getInvoiceReferenceMonth(refDateOnly, vencimentoCartao);
+const currentMonth = invoiceMonthDate.getMonth();
+const currentYear = invoiceMonthDate.getFullYear();
+
+// base normal da próxima fatura válida
+let faturaAtualValor = this.store.getFaturaBaseForMonth(invoiceMonthDate);
 
         // faturas históricas do mês que ainda não venceram na data observada
         const faturasHistoricasAtivasEsteMes = this.store.data.cartao.faturasFechadas.filter(f => {

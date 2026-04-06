@@ -120,7 +120,7 @@ class Store {
             planejamento: {},
             planejamentoDiario: {},
             receitas: [], receitasFixas: [], despesasFixas: [], despesasVariaveis: [],
-            cartao: { faturaInicial: 0, vencimentoData: '', vencimento: '', diaFechamento: '', compras: [], faturasFechadas: [] },
+            cartao: { faturaInicial: 0, vencimentoData: '', vencimento: '1', diaFechamento: '', compras: [], faturasFechadas: [] },
             investimentos: []
         };
     }
@@ -133,10 +133,10 @@ class Store {
     }
 
     setFaturaFechamento(fechamento, diaDefault) {
-        this.data.cartao.diaFechamento = fechamento;
-        this.data.cartao.vencimento = diaDefault;
-        this.saveData();
-    }
+    this.data.cartao.diaFechamento = fechamento;
+    this.data.cartao.vencimento = String(parseInt(diaDefault, 10) || 1);
+    this.saveData();
+}
 
     saveItem(type, item) {
         if (!item.id) item.id = generateId();
@@ -239,7 +239,7 @@ class Store {
             }
         });
 
-        const vencimento = parseInt(this.data.cartao.vencimento, 10) || 5; 
+        const vencimento = parseInt(this.data.cartao.vencimento, 10) || 1;
 
         let current = new Date(start);
         current.setDate(1); 
@@ -587,7 +587,7 @@ class App {
             html = `
                 <form id="form-config-cartao" onsubmit="window.app.handleFormSubmit(event, 'config-cartao')">
                     <p style="font-size:0.8rem;color:var(--info);margin-bottom:1rem">Regras base para o ciclo das compras novas informadas no sistema.</p>
-                    <div class="form-group"><label>Dia Padrão de Vencimento das faturas</label><input type="number" min="1" max="31" class="form-control" name="diaDefault" value="${item.vencimento || 5}" required></div>
+                    <div class="form-group"><label>Dia Padrão de Vencimento das faturas</label><input type="number" min="1" max="31" class="form-control" name="diaDefault" value="${item.vencimento || 1}" required></div>
                     <div class="form-group"><label>Dia do Fechamento (Opcional - p/ faturas longas)</label><input type="number" min="1" max="31" class="form-control" name="fechamento" value="${item.diaFechamento || ''}"></div>
                     <div class="form-actions"><button type="button" class="btn btn-outline" onclick="window.app.closeModal()">Cancelar</button><button type="submit" class="btn btn-primary">Salvar Configuração</button></div>
                 </form>`;
@@ -684,7 +684,7 @@ class App {
         
         
                // Limite diário
-        const vencimento = parseInt(this.store.data.cartao.vencimento, 10) || 5;
+        const vencimento = parseInt(this.store.data.cartao.vencimento, 10) || 1;
         let nextFaturaDate = new Date(this.referenceDate.getFullYear(), this.referenceDate.getMonth(), vencimento);
 
         if (nextFaturaDate <= this.referenceDate) {

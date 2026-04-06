@@ -55,9 +55,12 @@ const getInvoiceReferenceMonth = (refDateInput, diaVencimento) => {
 
     let monthStart = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
 
-    if (!isNaN(dueDay) && refDate.getDate() > dueDay) {
+    if (!isNaN(dueDay) && refDate.getDate() >= dueDay) {
         monthStart.setMonth(monthStart.getMonth() + 1);
     }
+
+    return monthStart;
+};
 
     return monthStart;
 };
@@ -144,7 +147,7 @@ class Store {
     }
 
     setFaturaFechamento(fechamento, diaDefault) {
-    this.data.cartao.diaFechamento = fechamento;
+    this.data.cartao.diaFechamento = '';
     this.data.cartao.vencimento = String(parseInt(diaDefault, 10) || 1);
     this.saveData();
 }
@@ -195,7 +198,7 @@ class Store {
     // Returns a specific fatura base value regardless of whether it was paid.
     getFaturaBaseForMonth(monthStart) {
         let total = 0;
-        const fechamento = this.data.cartao.diaFechamento || this.data.cartao.vencimento;
+        const fechamento = this.data.cartao.vencimento;
         
         this.data.cartao.compras.forEach(c => {
             const baseInvoiceStart = getFaturaMonth(c.data, fechamento);
@@ -818,7 +821,7 @@ class App {
         // Cartão (Dashboard View)
 
                 const vencimentoCartao = parseInt(this.store.data.cartao.vencimento, 10) || 1;
-const fechamento = this.store.data.cartao.diaFechamento || this.store.data.cartao.vencimento;
+const fechamento = this.store.data.cartao.vencimento;
 
 const refDateOnly = new Date(
     this.referenceDate.getFullYear(),

@@ -51,7 +51,19 @@ const getFaturaMonth = (purchaseDateStr, diaFechamento) => {
 };
 
 const getInvoiceReferenceMonth = (refDateInput, diaVencimento) => {
-    const getFaturaDueDate = (purchaseDateStr, diaVencimento) => {
+    const refDate = parseLocalDate(refDateInput);
+    const dueDay = parseInt(diaVencimento, 10);
+
+    let monthStart = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
+
+    if (!isNaN(dueDay) && refDate.getDate() >= dueDay) {
+        monthStart.setMonth(monthStart.getMonth() + 1);
+    }
+
+    return monthStart;
+};
+
+const getFaturaDueDate = (purchaseDateStr, diaVencimento) => {
     const pDate = parseLocalDate(purchaseDateStr);
     const dueDay = parseInt(diaVencimento, 10);
 
@@ -74,17 +86,6 @@ const getInvoiceReferenceMonth = (refDateInput, diaVencimento) => {
     const finalDueDay = Math.min(dueDay, lastDay);
 
     return new Date(dueYear, dueMonth, finalDueDay);
-};
-    const refDate = parseLocalDate(refDateInput);
-    const dueDay = parseInt(diaVencimento, 10);
-
-    let monthStart = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
-
-    if (!isNaN(dueDay) && refDate.getDate() >= dueDay) {
-        monthStart.setMonth(monthStart.getMonth() + 1);
-    }
-
-    return monthStart;
 };
 
 const countOccurrences = (dia, startDateStr, refDateStr, endDateStr = null) => {

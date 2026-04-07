@@ -910,20 +910,10 @@ class App {
         const invoiceMonth = invoiceMonthDate.getMonth();
         const invoiceYear = invoiceMonthDate.getFullYear();
 
-        // base normal da próxima fatura válida
-        let faturaAtualValor = this.store.getFaturaBaseForMonth(invoiceMonthDate);
+                const nextInvoiceDateStr = new Date(invoiceYear, invoiceMonth, vencimentoCartao).toISOString().split('T')[0];
 
-        // faturas históricas do mês que ainda não venceram na data observada
-        const faturasHistoricasAtivasEsteMes = this.store.data.cartao.faturasFechadas.filter(f => {
-            const dp = parseLocalDate(f.vencimentoData);
-            const mesmaCompetencia = dp.getMonth() === invoiceMonth && dp.getFullYear() === invoiceYear;
-            const aindaNaoVenceu = dp > refDateOnly;
-            return mesmaCompetencia && aindaNaoVenceu;
-        });
-
-        faturasHistoricasAtivasEsteMes.forEach(f => {
-            faturaAtualValor += f.valor;
-        });
+        // valor exato da próxima cobrança, igual ao que aparece no planejamento diário no dia da fatura
+        let faturaAtualValor = this.store.getInvoicesPaidInDateRange(nextInvoiceDateStr, nextInvoiceDateStr);
 
         const faturaEl = document.getElementById('fatura-atual');
         if (faturaEl) {
@@ -1009,7 +999,7 @@ class App {
             }
         });
 
-        document.getElementById('lista-fatura-atual').innerHTML =
+                document.getElementById('lista-fatura-atual').innerHTML =
             [...faturasHistoricasEsteMes, ...comprasDaProximaFatura].slice(0, 7).join('') ||
             '<p class="text-muted" style="font-size:0.85rem">Nenhuma compra faturada no mês selecionado.</p>';
 

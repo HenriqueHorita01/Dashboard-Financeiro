@@ -892,7 +892,8 @@ class App {
         else compEl.className = 'metric-card glass-panel primary-card';
         
                 // Cartão (Dashboard View)
-
+        const btnStyles = "background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem; margin-left:8px; transition:color 0.2s;";
+       
         const dashboardMonth = this.referenceDate.getMonth();
         const dashboardYear = this.referenceDate.getFullYear();
 
@@ -1037,7 +1038,6 @@ class App {
         // Badge will be handled individually or dropped, we will just manage history
 
         // --- 2. SUB-PAGES RENDER ---
-        const btnStyles = "background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.1rem; margin-left:8px; transition:color 0.2s;";
         
         document.getElementById('page-lista-receitas').innerHTML = this.store.data.receitas.map(r => {
             const displayStatus = isPastOrToday(r.data, this.referenceDate) ? 'Recebido' : r.status;

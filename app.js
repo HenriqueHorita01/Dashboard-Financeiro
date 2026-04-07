@@ -910,7 +910,12 @@ class App {
         const invoiceMonth = invoiceMonthDate.getMonth();
         const invoiceYear = invoiceMonthDate.getFullYear();
 
-                const nextInvoiceDateStr = new Date(invoiceYear, invoiceMonth, vencimentoCartao).toISOString().split('T')[0];
+                        const nextInvoiceDateStr = new Date(invoiceYear, invoiceMonth, vencimentoCartao).toISOString().split('T')[0];
+
+        const faturasHistoricasAtivasEsteMes = this.store.data.cartao.faturasFechadas.filter(f => {
+            const dp = parseLocalDate(f.vencimentoData);
+            return dp.getFullYear() === invoiceYear && dp.getMonth() === invoiceMonth;
+        });
 
         // valor exato da próxima cobrança, igual ao que aparece no planejamento diário no dia da fatura
         let faturaAtualValor = this.store.getInvoicesPaidInDateRange(nextInvoiceDateStr, nextInvoiceDateStr);

@@ -891,28 +891,31 @@ class App {
         if (comprometidoData.comprometido > 0) compEl.className = 'metric-card glass-panel danger-card';
         else compEl.className = 'metric-card glass-panel primary-card';
         
-        // Cartão (Dashboard View)
+                // Cartão (Dashboard View)
 
-                const vencimentoCartao = parseInt(this.store.data.cartao.vencimento, 10) || 1;
-const fechamento = this.store.data.cartao.vencimento;
+        const dashboardMonth = this.referenceDate.getMonth();
+        const dashboardYear = this.referenceDate.getFullYear();
 
-const refDateOnly = new Date(
-    this.referenceDate.getFullYear(),
-    this.referenceDate.getMonth(),
-    this.referenceDate.getDate()
-);
+        const vencimentoCartao = parseInt(this.store.data.cartao.vencimento, 10) || 1;
+        const fechamento = this.store.data.cartao.vencimento;
 
-const invoiceMonthDate = getInvoiceReferenceMonth(refDateOnly, vencimentoCartao);
-const currentMonth = invoiceMonthDate.getMonth();
-const currentYear = invoiceMonthDate.getFullYear();
+        const refDateOnly = new Date(
+            this.referenceDate.getFullYear(),
+            this.referenceDate.getMonth(),
+            this.referenceDate.getDate()
+        );
 
-// base normal da próxima fatura válida
-let faturaAtualValor = this.store.getFaturaBaseForMonth(invoiceMonthDate);
+        const invoiceMonthDate = getInvoiceReferenceMonth(refDateOnly, vencimentoCartao);
+        const invoiceMonth = invoiceMonthDate.getMonth();
+        const invoiceYear = invoiceMonthDate.getFullYear();
+
+        // base normal da próxima fatura válida
+        let faturaAtualValor = this.store.getFaturaBaseForMonth(invoiceMonthDate);
 
         // faturas históricas do mês que ainda não venceram na data observada
         const faturasHistoricasAtivasEsteMes = this.store.data.cartao.faturasFechadas.filter(f => {
             const dp = parseLocalDate(f.vencimentoData);
-            const mesmaCompetencia = dp.getMonth() === currentMonth && dp.getFullYear() === currentYear;
+            const mesmaCompetencia = dp.getMonth() === invoiceMonth && dp.getFullYear() === invoiceYear;
             const aindaNaoVenceu = dp > refDateOnly;
             return mesmaCompetencia && aindaNaoVenceu;
         });
@@ -937,63 +940,63 @@ let faturaAtualValor = this.store.getFaturaBaseForMonth(invoiceMonthDate);
         `);
 
         const comprasEsteMes = [];
-this.store.data.cartao.compras.forEach(c => {
-    const firstDueDate = getFaturaDueDate(c.data, fechamento);
+        this.store.data.cartao.compras.forEach(c => {
+            const firstDueDate = getFaturaDueDate(c.data, fechamento);
 
-    if (c.parcelado) {
-        for (let i = 0; i < c.parcelas; i++) {
-            const parcelaDueDate = new Date(firstDueDate.getFullYear(), firstDueDate.getMonth() + i, firstDueDate.getDate());
+            if (c.parcelado) {
+                for (let i = 0; i < c.parcelas; i++) {
+                    const parcelaDueDate = new Date(firstDueDate.getFullYear(), firstDueDate.getMonth() + i, firstDueDate.getDate());
 
-            if (
-                parcelaDueDate.getFullYear() === currentYear &&
-                parcelaDueDate.getMonth() === currentMonth
-            ) {
-                comprasEsteMes.push(`
-                    <li class="list-item">
-                        <div class="item-info">
-                            <h4>${c.descricao} (${i + 1}/${c.parcelas})</h4>
-                            <p>Adquirido em: ${formatDate(c.data)}</p>
-                        </div>
-                        <div class="item-amount text-danger">${formatCurrency(c.valor / c.parcelas)}</div>
-                    </li>
-                `);
+                    if (
+                        parcelaDueDate.getFullYear() === invoiceYear &&
+                        parcelaDueDate.getMonth() === invoiceMonth
+                    ) {
+                        comprasEsteMes.push(`
+                            <li class="list-item">
+                                <div class="item-info">
+                                    <h4>${c.descricao} (${i + 1}/${c.parcelas})</h4>
+                                    <p>Adquirido em: ${formatDate(c.data)}</p>
+                                </div>
+                                <div class="item-amount text-danger">${formatCurrency(c.valor / c.parcelas)}</div>
+                            </li>
+                        `);
+                    }
+                }
+            } else {
+                if (
+                    firstDueDate.getFullYear() === invoiceYear &&
+                    firstDueDate.getMonth() === invoiceMonth
+                ) {
+                    comprasEsteMes.push(`
+                        <li class="list-item">
+                            <div class="item-info">
+                                <h4>${c.descricao}</h4>
+                                <p>Adquirido em: ${formatDate(c.data)}</p>
+                            </div>
+                            <div class="item-amount text-danger">${formatCurrency(c.valor)}</div>
+                        </li>
+                    `);
+                }
             }
-        }
-    } else {
-        if (
-            firstDueDate.getFullYear() === currentYear &&
-            firstDueDate.getMonth() === currentMonth
-        ) {
-            comprasEsteMes.push(`
-                <li class="list-item">
-                    <div class="item-info">
-                        <h4>${c.descricao}</h4>
-                        <p>Adquirido em: ${formatDate(c.data)}</p>
-                    </div>
-                    <div class="item-amount text-danger">${formatCurrency(c.valor)}</div>
-                </li>
-            `);
-        }
-    }
-});
+        });
 
         document.getElementById('lista-fatura-atual').innerHTML =
             [...faturasHistoricasEsteMes, ...comprasEsteMes].slice(0, 7).join('') ||
             '<p class="text-muted" style="font-size:0.85rem">Nenhuma compra faturada no mês selecionado.</p>';
-        
+
         document.getElementById('lista-receitas').innerHTML = this.store.data.receitas.filter(r => {
-             const dp = new Date(r.data + 'T00:00:00'); 
-             return dp.getMonth() === currentMonth && dp.getFullYear() === currentYear;
+             const dp = new Date(r.data + 'T00:00:00');
+             return dp.getMonth() === dashboardMonth && dp.getFullYear() === dashboardYear;
         }).slice(0, 5).map(r => {
             const displayStatus = isPastOrToday(r.data, this.referenceDate) ? 'Recebido' : r.status;
             return `
             <li class="list-item"><div class="item-info"><h4>${r.descricao} - <em style="${displayStatus==='Recebido'?'color:var(--success)':'color:var(--warning)'}">${displayStatus}</em></h4><p>${formatDate(r.data)}</p></div><div class="item-amount text-success">+${formatCurrency(r.valor)}</div></li>
             `;
         }).join('') || '<p class="text-muted" style="font-size:0.85rem">Nenhuma receita no mês selecionado.</p>';
-        
+
         document.getElementById('lista-investimentos-dashboard').innerHTML = this.store.data.investimentos.filter(i => {
-             const dp = parseLocalDate(i.data); 
-             return dp.getMonth() === currentMonth && dp.getFullYear() === currentYear;
+             const dp = parseLocalDate(i.data);
+             return dp.getMonth() === dashboardMonth && dp.getFullYear() === dashboardYear;
         }).slice(0, 5).map(i => `
             <li class="list-item"><div class="item-info"><h4>${i.tipo}</h4><p>${formatDate(i.data)}</p></div><div class="item-amount text-success">${formatCurrency(i.valor)}</div></li>
         `).join('') || '<p class="text-muted" style="font-size:0.85rem">Nenhum investimento no mês selecionado.</p>';

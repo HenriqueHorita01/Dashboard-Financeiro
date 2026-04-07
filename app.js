@@ -939,19 +939,27 @@ class App {
             </li>
         `);
 
-        const comprasEsteMes = [];
+                const comprasDaProximaFatura = [];
+        const comprasLancadasNoMesAtual = [];
+
         this.store.data.cartao.compras.forEach(c => {
+            const compraDate = parseLocalDate(c.data);
             const firstDueDate = getFaturaDueDate(c.data, fechamento);
 
+            // 1) Lista para o card "Cartão (Este Mês)" = próxima fatura válida
             if (c.parcelado) {
                 for (let i = 0; i < c.parcelas; i++) {
-                    const parcelaDueDate = new Date(firstDueDate.getFullYear(), firstDueDate.getMonth() + i, firstDueDate.getDate());
+                    const parcelaDueDate = new Date(
+                        firstDueDate.getFullYear(),
+                        firstDueDate.getMonth() + i,
+                        firstDueDate.getDate()
+                    );
 
                     if (
                         parcelaDueDate.getFullYear() === invoiceYear &&
                         parcelaDueDate.getMonth() === invoiceMonth
                     ) {
-                        comprasEsteMes.push(`
+                        comprasDaProximaFatura.push(`
                             <li class="list-item">
                                 <div class="item-info">
                                     <h4>${c.descricao} (${i + 1}/${c.parcelas})</h4>
@@ -967,7 +975,7 @@ class App {
                     firstDueDate.getFullYear() === invoiceYear &&
                     firstDueDate.getMonth() === invoiceMonth
                 ) {
-                    comprasEsteMes.push(`
+                    comprasDaProximaFatura.push(`
                         <li class="list-item">
                             <div class="item-info">
                                 <h4>${c.descricao}</h4>
@@ -978,11 +986,35 @@ class App {
                     `);
                 }
             }
+
+            // 2) Lista para a aba "Cartão de Crédito" = gastos lançados no mês observado
+            if (
+                compraDate.getFullYear() === dashboardYear &&
+                compraDate.getMonth() === dashboardMonth
+            ) {
+                comprasLancadasNoMesAtual.push(`
+                    <li class="list-item">
+                        <div class="item-info">
+                            <h4>${c.descricao}${c.parcelado ? ` (${c.parcelas}x)` : ''}</h4>
+                            <p>Compra em: ${formatDate(c.data)}</p>
+                        </div>
+                        <div style="display:flex; align-items:center;">
+                            <div class="item-amount text-danger">${formatCurrency(c.valor)}</div>
+                            <button style="${btnStyles}" onclick="window.app.openModal('compra-cartao', '${c.id}')" title="Editar">✏️</button>
+                            <button style="${btnStyles}" onclick="window.app.deleteItem('compra-cartao', '${c.id}')" title="Excluir">❌</button>
+                        </div>
+                    </li>
+                `);
+            }
         });
 
         document.getElementById('lista-fatura-atual').innerHTML =
-            [...faturasHistoricasEsteMes, ...comprasEsteMes].slice(0, 7).join('') ||
+            [...faturasHistoricasEsteMes, ...comprasDaProximaFatura].slice(0, 7).join('') ||
             '<p class="text-muted" style="font-size:0.85rem">Nenhuma compra faturada no mês selecionado.</p>';
+
+        document.getElementById('page-lista-cartao').innerHTML =
+            comprasLancadasNoMesAtual.join('') ||
+            '<p class="text-muted" style="margin-top:1rem">Nenhuma compra no cartão lançada no mês selecionado.</p>';
 
         document.getElementById('lista-receitas').innerHTML = this.store.data.receitas.filter(r => {
              const dp = new Date(r.data + 'T00:00:00');
@@ -1067,7 +1099,6 @@ class App {
             return html;
         }).join('') || '<p class="text-muted" style="margin-top:1rem">Nenhuma despesa variável cadastrada.</p>';
 
-        document.getElementById('page-lista-cartao').innerHTML = comprasEsteMes.join('') || '<p class="text-muted" style="margin-top:1rem">Nenhuma compra no cartão faturada no mês selecionado.</p>';
 
         const ulHist = document.getElementById('page-lista-faturas-fechadas');
         if(ulHist) {

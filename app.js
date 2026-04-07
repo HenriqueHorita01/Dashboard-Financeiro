@@ -1004,13 +1004,9 @@ class App {
             }
         });
 
-                document.getElementById('lista-fatura-atual').innerHTML =
-            [...faturasHistoricasEsteMes, ...comprasDaProximaFatura].slice(0, 7).join('') ||
-            '<p class="text-muted" style="font-size:0.85rem">Nenhuma compra faturada no mês selecionado.</p>';
-
-        document.getElementById('page-lista-cartao').innerHTML =
-            comprasLancadasNoMesAtual.join('') ||
-            '<p class="text-muted" style="margin-top:1rem">Nenhuma compra no cartão lançada no mês selecionado.</p>';
+                        document.getElementById('lista-fatura-atual').innerHTML =
+            [...faturasHistoricasEsteMes, ...comprasLancadasNoMesAtual].slice(0, 7).join('') ||
+            '<p class="text-muted" style="font-size:0.85rem">Nenhuma compra no cartão lançada no mês selecionado.</p>';
 
         document.getElementById('lista-receitas').innerHTML = this.store.data.receitas.filter(r => {
              const dp = new Date(r.data + 'T00:00:00');

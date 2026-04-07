@@ -273,46 +273,84 @@ class Store {
 
     // Sum of all faturas due in the specified range.
     getInvoicesPaidInDateRange(startDateStr, endDateStr) {
-        if (!startDateStr || !endDateStr) return 0;
-        
-        let total = 0;
-        const start = parseLocalDate(startDateStr);
-        const end = parseLocalDate(endDateStr);
-        end.setHours(23, 59, 59, 999);
-        
-        // Iterate explicit historic faturas
-        this.data.cartao.faturasFechadas.forEach(f => {
-            const vData = parseLocalDate(f.vencimentoData);
-            if (vData >= start && vData <= end) {
-                total += f.valor;
-            }
-        });
+    if (!startDateStr || !endDateStr) return 0;
 
-        const vencimento = parseInt(this.data.cartao.vencimento, 10) || 1;
+    let total = 0;
+    const start = parseLocalDate(startDateStr);
+    start.setHours(0, 0, 0, 0);
 
-        let current = new Date(start);
-        current.setDate(1); 
-        
-        while(true) {
-            let dueDay = vencimento;
-            const lastDay = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
-            if (dueDay > lastDay) dueDay = lastDay;
-            
-            const dueDate = new Date(current.getFullYear(), current.getMonth(), dueDay);
-            
-            if (dueDate >= start && dueDate <= end) {
-                total += this.getFaturaBaseForMonth(current);
-            }
-            
-            if (current.getFullYear() > end.getFullYear() || 
-               (current.getFullYear() === end.getFullYear() && current.getMonth() >= end.getMonth())) {
-                break;
-            }
-            current.setMonth(current.getMonth() + 1);
+    const end = parseLocalDate(endDateStr);
+    end.setHours(23, 59, 59, 999);
+
+    const vencimento = parseInt(this.data.cartao.vencimento, 10) || 1;
+
+    // 1) Faturas históricas explícitas
+    this.data.cartao.faturasFechadas.forEach(f => {
+        const vData = parseLocalDate(f.vencimentoData);
+        if (vData >= start && vData <= end) {
+            total += f.valor;
         }
-        
-        return total;
-    }
+    });
+
+    // 2) Compras do cartão pela data exata de vencimento
+    this.data.cartao.compras.forEach(c => {
+        const firstDueDate = getFaturaDueDate(c.data, vencimento);
+
+        if (c.parcelado) {
+            for (let i = 0; i < c.parcelas; i++) {
+                const parcelaDueDate = new Date(
+                    firstDueDate.getFullYear(),
+                    firstDueDate.getMonth() + i,
+                    firstDueDate.getDate()
+                );
+
+                if (parcelaDueDate >= start && parcelaDueDate <= end) {
+                    total += (c.valor / c.parcelas);
+                }
+            }
+        } else {
+            if (firstDueDate >= start && firstDueDate <= end) {
+                total += c.valor;
+            }
+        }
+    });
+
+    // 3) Despesas fixas no crédito pela data exata de vencimento
+    this.data.despesasFixas.forEach(d => {
+        if (d.tipoPagamento !== 'Crédito') return;
+
+        // sem data inicial: mantém comportamento simples, contando a partir do mês inicial do intervalo
+        const dataInicioReal = d.dataInicio ? parseLocalDate(d.dataInicio) : new Date(start.getFullYear(), start.getMonth(), 1);
+
+        let cursor = new Date(dataInicioReal.getFullYear(), dataInicioReal.getMonth(), 1);
+
+        while (cursor <= end) {
+            let diaCobranca = parseInt(d.dia, 10);
+            const ultimoDiaMes = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+
+            if (diaCobranca > ultimoDiaMes) {
+                diaCobranca = ultimoDiaMes;
+            }
+
+            const dataCompraVirtual = new Date(cursor.getFullYear(), cursor.getMonth(), diaCobranca);
+
+            if (dataCompraVirtual >= dataInicioReal) {
+                const dueDate = getFaturaDueDate(
+                    dataCompraVirtual.toISOString().split('T')[0],
+                    vencimento
+                );
+
+                if (dueDate >= start && dueDate <= end) {
+                    total += d.valor;
+                }
+            }
+
+            cursor.setMonth(cursor.getMonth() + 1);
+        }
+    });
+
+    return total;
+}
 
     getSaldoDisponivel(refDate) {
         if (this.data.config.saldoInicial === null || !this.data.config.dataInicial) return 0;
@@ -875,7 +913,7 @@ let faturaAtualValor = this.store.getFaturaBaseForMonth(invoiceMonthDate);
         const faturasHistoricasAtivasEsteMes = this.store.data.cartao.faturasFechadas.filter(f => {
             const dp = parseLocalDate(f.vencimentoData);
             const mesmaCompetencia = dp.getMonth() === currentMonth && dp.getFullYear() === currentYear;
-            const aindaNaoVenceu = dp >= refDateOnly;
+            const aindaNaoVenceu = dp > refDateOnly;
             return mesmaCompetencia && aindaNaoVenceu;
         });
 
